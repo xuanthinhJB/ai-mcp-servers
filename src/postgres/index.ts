@@ -104,6 +104,46 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: "create",
+        description: "Run a create-table SQL query",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sql: { type: "string" },
+          },
+        },
+      },
+      {
+        name: "insert",
+        description: "Run an insert-data SQL query",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sql: { type: "string" },
+          },
+        },
+      },
+      {
+        name: "update",
+        description: "Run an update-data SQL query",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sql: { type: "string" },
+          },
+        },
+      },
+      {
+        name: "delete",
+        description: "Run a delete-data SQL query",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sql: { type: "string" },
+          },
+        },
+      },
     ],
   };
 });
@@ -118,6 +158,88 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const result = await client.query(sql);
       return {
         content: [{ type: "text", text: JSON.stringify(result.rows, null, 2) }],
+        isError: false,
+      };
+    } catch (error) {
+      throw error;
+    } finally {
+      client
+        .query("ROLLBACK")
+        .catch((error) =>
+          console.warn("Could not roll back transaction:", error),
+        );
+
+      client.release();
+    }
+  }
+  if (request.params.name === "create") {
+    const sql = request.params.arguments?.sql as string;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN TRANSACTION");
+      await client.query(sql);
+      return {
+        content: [{ type: "text", text: "Table created successfully" }],
+        isError: false,
+      };
+    } catch (error) {
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+  if (request.params.name === "insert") {
+    const sql = request.params.arguments?.sql as string;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN TRANSACTION");
+      await client.query(sql);
+      return {
+        content: [{ type: "text", text: "Data inserted successfully" }],
+        isError: false,
+      };
+    } catch (error) {
+      throw error;
+    } finally {
+      client
+        .query("ROLLBACK")
+        .catch((error) =>
+          console.warn("Could not roll back transaction:", error),
+        );
+
+      client.release();
+    }
+  }
+  if (request.params.name === "update") {
+    const sql = request.params.arguments?.sql as string;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN TRANSACTION");
+      await client.query(sql);
+      return {
+        content: [{ type: "text", text: "Data updated successfully" }],
+        isError: false,
+      };
+    } catch (error) {
+      throw error;
+    } finally {
+      client
+        .query("ROLLBACK")
+        .catch((error) =>
+          console.warn("Could not roll back transaction:", error),
+        );
+
+      client.release();
+    }
+  }
+  if (request.params.name === "delete") {
+    const sql = request.params.arguments?.sql as string;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN TRANSACTION");
+      await client.query(sql);
+      return {
+        content: [{ type: "text", text: "Data deleted successfully" }],
         isError: false,
       };
     } catch (error) {
